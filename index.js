@@ -105,7 +105,7 @@ myEmitter.on("myEvent",  async (arg, arg1, callback) => {
       "/shipments/create/forward-shipment",
       arg1
     );
-    console.log(typeof callback);
+    console.log("Callback",typeof callback);
     if (typeof callback === 'function') {
       callback(null, response);
     }
@@ -359,7 +359,9 @@ app.post("/api/orders", async (req, res) => {
       });
       //myEmitter2.emit("email", name, orderName, email);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter.emit("myEvent", `${token}`, dataTemp, (error, result) => {
+      myEmitter.emit("myEvent", `${token}`, dataTemp, async function(error, result){
+        error = await error 
+        result = await result 
         if (error) {
           console.error('An error occurred:', error);
         } else {
