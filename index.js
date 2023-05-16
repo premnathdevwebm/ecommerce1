@@ -99,12 +99,16 @@ myEmitter2.on("email", (name, order, email) => {
     });
 });
 
-myEmitter.on("myEvent", async (arg, arg1, callback) => {
-  const response = await AuthShipRock(arg).post(
-    "/shipments/create/forward-shipment",
-    arg1
-  );
-  callback(response);
+myEmitter.on("myEvent",  (arg, arg1, callback) => {
+  AuthShipRock(arg)
+    .post("/shipments/create/forward-shipment", arg1)
+    .then(response => {
+      callback(null, response); // Pass null as the error parameter and response as the result
+    })
+    .catch(error => {
+      console.error(error);
+      callback(error); // Pass the error to the callback
+    });
 });
 
 const app = express();
@@ -349,11 +353,15 @@ app.post("/api/orders", async (req, res) => {
       });
       //myEmitter2.emit("email", name, orderName, email);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter.emit("myEvent", `${token}`, dataTemp,  (result) => {
-        console.log('Result received:', result);
+      myEmitter.emit("myEvent", `${token}`, dataTemp, (error, result) => {
+        if (error) {
+          console.error('An error occurred:', error);
+        } else {
+          console.log('Result received:', result);
+        }
       });
     }
-    res.json({"response": "An order was placed"});
+    res.json({ response: "An order was placed" });
   } catch (err) {
     console.log(err);
     res.status(500);
