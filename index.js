@@ -99,12 +99,12 @@ myEmitter2.on("email", (name, order, email) => {
     });
 });
 
-myEmitter.on("myEvent", async (arg, arg1) => {
+myEmitter.on("myEvent", async (arg, arg1, callback) => {
   const response = await AuthShipRock(arg).post(
     "/shipments/create/forward-shipment",
     arg1
   );
-  console.log(response);
+  callback(response);
 });
 
 const app = express();
@@ -347,9 +347,11 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      myEmitter.emit("myEvent", `${token}`, dataTemp);
+      //myEmitter2.emit("email", name, orderName, email);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter2.emit("email", name, orderName, email);
+      myEmitter.emit("myEvent", `${token}`, dataTemp,  (result) => {
+        console.log('Result received:', result);
+      });
     }
     res.json({"response": "An order was placed"});
   } catch (err) {
