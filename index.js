@@ -359,14 +359,13 @@ app.post("/api/orders", async (req, res) => {
     }
     // Listener to receive the response
     myEmitter.on("response", (result) => {
-      console.log("Received response:", result);
+      res.status(200).json({"response": result});
     });
 
     // Listener to handle errors
     myEmitter.on("error", (error) => {
-      console.error("Error occurred:", error);
+      res.status(500).json({"response": error});
     });
-    res.json({});
   } catch (err) {
     console.log(err);
     res.status(500);
