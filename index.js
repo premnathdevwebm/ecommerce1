@@ -105,6 +105,7 @@ myEmitter.on("myEvent",  async (arg, arg1, callback) => {
       "/shipments/create/forward-shipment",
       arg1
     );
+    console.log(typeof callback);
     if (typeof callback === 'function') {
       callback(null, response);
     }
