@@ -99,16 +99,21 @@ myEmitter2.on("email", (name, order, email) => {
     });
 });
 
-myEmitter.on("myEvent",  (arg, arg1, callback) => {
-  AuthShipRock(arg)
-    .post("/shipments/create/forward-shipment", arg1)
-    .then(response => {
-      callback(null, response); // Pass null as the error parameter and response as the result
-    })
-    .catch(error => {
-      console.error(error);
-      callback(error); // Pass the error to the callback
-    });
+myEmitter.on("myEvent",  async (arg, arg1, callback) => {
+  try {
+    const response = await AuthShipRock(arg).post(
+      "/shipments/create/forward-shipment",
+      arg1
+    );
+    if (typeof callback === 'function') {
+      callback(null, response);
+    }
+  } catch (err) {
+    console.error(err);
+    if (typeof callback === 'function') {
+      callback(err);
+    }
+  }
 });
 
 const app = express();
