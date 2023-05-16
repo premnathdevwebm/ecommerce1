@@ -99,16 +99,17 @@ myEmitter2.on("email", (name, order, email) => {
     });
 });
 
-myEmitter.on("myEvent",  async (arg, arg1) => {
+myEmitter.on("myEvent", async (arg, arg1) => {
   try {
     const response = await AuthShipRock(arg).post(
       "/shipments/create/forward-shipment",
       arg1
     );
-    return response;
-  } catch (err) {
-    console.error(err);
-    throw err;
+    // Send response back to the emitter
+    myEmitter.emit("response", response.data);
+  } catch (error) {
+    // Handle any errors
+    myEmitter.emit("error", error);
   }
 });
 
@@ -354,16 +355,18 @@ app.post("/api/orders", async (req, res) => {
       });
       //myEmitter2.emit("email", name, orderName, email);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter.emit("myEvent", `${token}`, dataTemp).then(result => {
-        console.log('Result received:', result);
-        res.json({ response: "An order was placed" });
-      })
-      .catch(error => {
-        console.error('An error occurred:', error);
-        res.json({ response: "Problem in placing order" });
-      });
+      myEmitter.emit("myEvent", `${token}`, dataTemp);
     }
-    
+    // Listener to receive the response
+    myEmitter.on("response", (result) => {
+      console.log("Received response:", result);
+    });
+
+    // Listener to handle errors
+    myEmitter.on("error", (error) => {
+      console.error("Error occurred:", error);
+    });
+    res.json({});
   } catch (err) {
     console.log(err);
     res.status(500);
