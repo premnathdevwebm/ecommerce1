@@ -1,12 +1,12 @@
 require("dotenv").config();
+const axios = require("axios");
 const express = require("express");
-const EventEmitter = require('events');
+const EventEmitter = require("events");
 const cors = require("cors");
 const crypto = require("crypto");
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const { noAuthShipRock, AuthShipRock } = require("./api");
-
 
 const data = require("./data.json");
 
@@ -15,8 +15,7 @@ const myEmitter1 = new EventEmitter();
 const myEmitter2 = new EventEmitter();
 
 //myEmitter1.on("sms", ()=>{})
-myEmitter2.on("email", (name, order, email)=>{
-
+myEmitter2.on("email", (name, order, email) => {
   const html = `<!DOCTYPE html>
   <html>
     <head>
@@ -70,8 +69,8 @@ myEmitter2.on("email", (name, order, email)=>{
       <!-- Content -->
       <div class="content">
         <h1>Oder Placed</h1>
-        <p>Dear ${name},</p>
-        <p>${order} order has been placed.</p>
+        <p>Dear Team,</p>
+        <p>${order} order has been placed by ${name}.</p>
         <p>Best regards,<br>Civsa</p>
       </div>
   
@@ -80,32 +79,32 @@ myEmitter2.on("email", (name, order, email)=>{
         <p>&copy; 2023 Civsa. All rights reserved.</p>
       </div>
     </body>
-  </html>`
+  </html>`;
 
   const msg = {
-    to: email, // Change to your recipient
+    to: "support@civsa.in", // Change to your recipient
     from: process.env.SENDGRID_SENDER_MAIL, // Change to your verified sender
-    subject: 'Order placed',
-    text: 'A order is placed',
+    subject: "Order placed",
+    text: "A order is placed",
     html,
-  }
+  };
 
   sgMail
-  .send(msg)
-  .then(() => {
-    console.log('Email sent')
-  })
-  .catch((error) => {
-    console.error(error)
-  })
+    .send(msg)
+    .then(() => {
+      console.log("Email sent");
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
 
-})
-
-myEmitter.on('myEvent', async(arg, arg1) => {
-  await AuthShipRock(arg).post(
+myEmitter.on("myEvent", async (arg, arg1) => {
+  const response = await AuthShipRock(arg).post(
     "/shipments/create/forward-shipment",
     arg1
-  )
+  );
+  console.log(response);
 });
 
 const app = express();
@@ -238,11 +237,20 @@ app.post("/api/orders", async (req, res) => {
       state,
       country,
       zip,
+      length,
+      breadth,
+      height,
+      weight,
     } = req.body;
 
-    const orderName = cartItems[0].data.name;
-    const orderSku = cartItems[0].data.SKU;
-    const orderSelling = cartItems[0].data.offerprice;
+    const order_items = cartItems.map((ele) => ({
+      name: ele.orderName,
+      sku: ele.orderSku,
+      units: ele.units,
+      selling_price: ele.orderSelling,
+      discount: "",
+      tax: "",
+    }));
 
     const {
       data: { token },
@@ -275,22 +283,13 @@ app.post("/api/orders", async (req, res) => {
         billing_email: email,
         billing_phone: phone,
         shipping_is_billing: true,
-        order_items: [
-          {
-            name: orderName,
-            sku: orderSku,
-            units: 1,
-            selling_price: orderSelling,
-            discount: "",
-            tax: "",
-          },
-        ],
+        order_items,
         payment_method: "COD",
         sub_total: cartSubTotal,
-        length: 10,
-        breadth: 15,
-        height: 20,
-        weight: 2.5,
+        length,
+        breadth,
+        height,
+        weight,
         shipping_customer_name: "",
         shipping_last_name: "",
         shipping_address: "",
@@ -306,9 +305,9 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      myEmitter.emit('myEvent', `${token}`, dataTemp); 
+      myEmitter.emit("myEvent", `${token}`, dataTemp);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter2.emit('email', name, orderName, email);
+      // myEmitter2.emit('email', name, orderName, email);
     } else {
       const dataTemp = JSON.stringify({
         order_id: randomNum,
@@ -326,22 +325,13 @@ app.post("/api/orders", async (req, res) => {
         billing_email: email,
         billing_phone: phone,
         shipping_is_billing: true,
-        order_items: [
-          {
-            name: orderName,
-            sku: orderSku,
-            units: 1,
-            selling_price: orderSelling,
-            discount: "",
-            tax: "",
-          },
-        ],
+        order_items,
         payment_method: "Prepaid",
         sub_total: cartSubTotal,
-        length: 10,
-        breadth: 15,
-        height: 20,
-        weight: 2.5,
+        length,
+        breadth,
+        height,
+        weight,
         shipping_customer_name: "",
         shipping_last_name: "",
         shipping_address: "",
@@ -357,11 +347,11 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      myEmitter.emit('myEvent', `${token}`, dataTemp);
+      myEmitter.emit("myEvent", `${token}`, dataTemp);
       //myEmitter1.emit('sms', name, orderName, phone);
-      myEmitter2.emit('email', name, orderName, email);
+      myEmitter2.emit("email", name, orderName, email);
     }
-    res.json({})
+    res.json({});
   } catch (err) {
     console.log(err);
     res.status(500);
@@ -385,7 +375,118 @@ app.post("/create-charge", async (req, res) => {
   }
 });
 
+app.post("/sendmail", async (req, res) => {
+  try {
+    const fromEmail = process.env.SENDGRID_SENDER_MAIL;
+    const toEmail = req.body.toEmail;
+    const ccEmail = req.body.ccEmail;
+    const subject = req.body.subject;
+    const body = req.body.body;
+    const pdfFileLinks = req.body.pdfFileLinks;
+    await sendEmail(pdfFileLinks, toEmail, ccEmail, subject, fromEmail, body);
+    res.json({});
+  } catch (err) {
+    console.error(err);
+  }
+});
+
 // Start the server
 app.listen(1337, "0.0.0.0", () => {
   console.log("Server started on port 1337");
 });
+
+async function downloadPDF(url) {
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  return Buffer.from(response.data, "binary");
+}
+
+async function preparePayload(
+  pdfFileLinks,
+  toEmail,
+  ccEmail,
+  subject,
+  fromEmail,
+  body
+) {
+  const attachments = await Promise.all(
+    pdfFileLinks.map(async (link) => {
+      const pdfContent = await downloadPDF(link);
+      return {
+        content: pdfContent.toString("base64"),
+        filename: link.substring(link.lastIndexOf("/") + 1),
+        type: "application/pdf",
+        disposition: "attachment",
+      };
+    })
+  );
+  if (ccEmail) {
+    return {
+      personalizations: [
+        {
+          to: [{ email: toEmail }],
+          cc: [{ email: ccEmail }],
+          subject: subject,
+        },
+      ],
+      from: { email: fromEmail },
+      content: [
+        {
+          type: "text/plain",
+          value: body,
+        },
+      ],
+      attachments: attachments,
+    };
+  } else {
+    return {
+      personalizations: [
+        {
+          to: [{ email: toEmail }],
+          subject: subject,
+        },
+      ],
+      from: { email: fromEmail },
+      content: [
+        {
+          type: "text/plain",
+          value: body,
+        },
+      ],
+      attachments: attachments,
+    };
+  }
+}
+
+async function sendEmail(
+  pdfFileLinks,
+  toEmail,
+  ccEmail,
+  subject,
+  fromEmail,
+  body
+) {
+  try {
+    const payload = await preparePayload(
+      pdfFileLinks,
+      toEmail,
+      ccEmail,
+      subject,
+      fromEmail,
+      body
+    );
+    const response = await axios.post(
+      "https://api.sendgrid.com/v3/mail/send",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("Email sent successfully!");
+    console.log(response.data);
+  } catch (error) {
+    console.error("Error sending email:", error.response.data);
+  }
+}
