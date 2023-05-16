@@ -351,7 +351,7 @@ app.post("/api/orders", async (req, res) => {
       //myEmitter1.emit('sms', name, orderName, phone);
       myEmitter2.emit("email", name, orderName, email);
     }
-    res.json({});
+    res.json({"response": "An order was placed"});
   } catch (err) {
     console.log(err);
     res.status(500);
