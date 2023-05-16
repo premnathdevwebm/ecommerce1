@@ -356,12 +356,14 @@ app.post("/api/orders", async (req, res) => {
       //myEmitter1.emit('sms', name, orderName, phone);
       myEmitter.emit("myEvent", `${token}`, dataTemp).then(result => {
         console.log('Result received:', result);
+        res.json({ response: "An order was placed" });
       })
       .catch(error => {
         console.error('An error occurred:', error);
+        res.json({ response: "Problem in placing order" });
       });
     }
-    res.json({ response: "An order was placed" });
+    
   } catch (err) {
     console.log(err);
     res.status(500);
