@@ -435,7 +435,7 @@ async function preparePayload(
       from: { email: fromEmail },
       content: [
         {
-          type: "text/plain",
+          type: "text/html",
           value: body,
         },
       ],
