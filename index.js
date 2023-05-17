@@ -331,19 +331,22 @@ app.post("/api/orders", async (req, res) => {
       myEmitter.emit("myEvent", `${token}`, dataTemp, name);
     }
     // Listener to receive the response
-    myEmitter.on("response", (result) => {
-      const [order, name] = result
-      console.log("???", order, name);
-     /**
-      * await sendEmail(
-    pdfFileLinks,
-    "support@civsa.in",
-    process.env.SENDGRID_SENDER_MAIL,
-    "Order placed",
-    process.env.SENDGRID_SENDER_MAIL,
-    html
-  );
-      */
+    myEmitter.on("response", async (result) => {
+      const [order, name] = result;
+      const html = generateMailBody(
+        name,
+        order.payload.order_id,
+        order.payload.shipment_id
+      );
+      await sendEmail(
+        [order.payload.label_url, order.payload.manifest_url],
+        "support@civsa.in",
+        process.env.SENDGRID_SENDER_MAIL,
+        "Order placed",
+        process.env.SENDGRID_SENDER_MAIL,
+        html
+      );
+
       res.status(200).json({ response: result });
     });
 
