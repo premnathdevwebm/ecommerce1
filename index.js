@@ -4,18 +4,14 @@ const express = require("express");
 const EventEmitter = require("events");
 const cors = require("cors");
 const crypto = require("crypto");
-const sgMail = require("@sendgrid/mail");
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const { noAuthShipRock, AuthShipRock } = require("./api");
 
 const data = require("./data.json");
 
 const myEmitter = new EventEmitter();
-const myEmitter1 = new EventEmitter();
-const myEmitter2 = new EventEmitter();
 
 //myEmitter1.on("sms", ()=>{})
-myEmitter2.on("email", (name, order, email) => {
+myEmitter.on("email", async (name, order, email, result) => {
   const html = `<!DOCTYPE html>
   <html>
     <head>
@@ -81,6 +77,20 @@ myEmitter2.on("email", (name, order, email) => {
     </body>
   </html>`;
 
+  console.log(">>>???", result);
+
+/* 
+  await sendEmail(
+    pdfFileLinks,
+    "support@civsa.in",
+    process.env.SENDGRID_SENDER_MAIL,
+    "Order placed",
+    process.env.SENDGRID_SENDER_MAIL,
+    html
+  );
+   */
+
+  /* 
   const msg = {
     to: "support@civsa.in", // Change to your recipient
     from: process.env.SENDGRID_SENDER_MAIL, // Change to your verified sender
@@ -97,6 +107,7 @@ myEmitter2.on("email", (name, order, email) => {
     .catch((error) => {
       console.error(error);
     });
+     */
 });
 
 myEmitter.on("myEvent", async (arg, arg1) => {
@@ -154,7 +165,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "ssd-2141542431",
       name: "Curcumin",
-      price: 19.99,
       mrp: 1499.0,
       offerprice: 899.0,
       img: {
@@ -164,7 +174,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "bnst-3426647",
       name: "Joint Health Support",
-      price: 5.99,
       mrp: 1799.0,
       offerprice: 1199.0,
       img: {
@@ -174,7 +183,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "sb-87294523",
       name: "Pre And Probiotics",
-      price: 5.99,
       mrp: 1999.0,
       offerprice: 999.0,
       img: {
@@ -184,7 +192,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "sc-4329784238765",
       name: "Daily Essentials",
-      price: 5.99,
       mrp: 949.0,
       offerprice: 570.0,
       img: {
@@ -194,7 +201,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "kbcp-824947873265",
       name: "Liver Care",
-      price: 5.99,
       mrp: 1499.0,
       offerprice: 1049.0,
       img: {
@@ -204,7 +210,6 @@ app.get("/api/products/popular", (req, res) => {
     {
       id: "1234-KAJSUDTH",
       name: "EPF - Energy, Power And Focus",
-      price: 5.99,
       mrp: 2999.0,
       offerprice: 1299.0,
       img: {
@@ -313,7 +318,6 @@ app.post("/api/orders", async (req, res) => {
       });
       myEmitter.emit("myEvent", `${token}`, dataTemp);
       //myEmitter1.emit('sms', name, orderName, phone);
-      // myEmitter2.emit('email', name, orderName, email);
     } else {
       const dataTemp = JSON.stringify({
         order_id: randomNum,
@@ -353,25 +357,23 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      //myEmitter2.emit("email", name, orderName, email);
-      //myEmitter1.emit('sms', name, orderName, phone);
       myEmitter.emit("myEvent", `${token}`, dataTemp);
     }
     // Listener to receive the response
     myEmitter.on("response", (result) => {
-      res.status(200).json({"response": result});
+      myEmitter.emit("email", name, orderName, email, result);
+      res.status(200).json({ response: result });
     });
 
     // Listener to handle errors
     myEmitter.on("error", (error) => {
-      res.status(500).json({"response": error});
+      res.status(500).json({ response: error });
     });
   } catch (err) {
     console.log(err);
     res.status(500);
   }
 });
-
 
 app.post("/create-charge", async (req, res) => {
   try {
@@ -390,20 +392,6 @@ app.post("/create-charge", async (req, res) => {
   }
 });
 
-app.post("/sendmail", async (req, res) => {
-  try {
-    const fromEmail = process.env.SENDGRID_SENDER_MAIL;
-    const toEmail = req.body.toEmail;
-    const ccEmail = req.body.ccEmail;
-    const subject = req.body.subject;
-    const body = req.body.body;
-    const pdfFileLinks = req.body.pdfFileLinks;
-    await sendEmail(pdfFileLinks, toEmail, ccEmail, subject, fromEmail, body);
-    res.json({});
-  } catch (err) {
-    console.error(err);
-  }
-});
 
 // Start the server
 app.listen(1337, "0.0.0.0", () => {
