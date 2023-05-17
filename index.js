@@ -332,6 +332,8 @@ app.post("/api/orders", async (req, res) => {
     }
     // Listener to receive the response
     myEmitter.on("response", (result) => {
+      const [order, name] = result
+      console.log("???", order, name);
      /**
       * await sendEmail(
     pdfFileLinks,
