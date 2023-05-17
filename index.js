@@ -10,7 +10,7 @@ const data = require("./data.json");
 
 const myEmitter = new EventEmitter();
 
-function generateMailBody(name, order) {
+function generateMailBody(name, order, ship) {
   return `<!DOCTYPE html>
 <html>
   <head>
@@ -65,7 +65,7 @@ function generateMailBody(name, order) {
     <div class="content">
       <h1>Oder Placed</h1>
       <p>Dear Team,</p>
-      <p>${order} order has been placed by ${name}.</p>
+      <p>An order ID: ${order} and shipment ID: ${ship}  has been placed by ${name}.</p>
       <p>Best regards,<br>Civsa</p>
     </div>
 
@@ -81,14 +81,14 @@ function generateMailBody(name, order) {
 //myEmitter1.on("sms", ()=>{})
 */
 
-myEmitter.on("myEvent", async (arg, arg1) => {
+myEmitter.on("myEvent", async (arg, arg1, arg2) => {
   try {
     const response = await AuthShipRock(arg).post(
       "/shipments/create/forward-shipment",
       arg1
     );
     // Send response back to the emitter
-    myEmitter.emit("response", response.data);
+    myEmitter.emit("response", [response.data, arg2]);
   } catch (error) {
     // Handle any errors
     myEmitter.emit("error", error);
@@ -287,7 +287,7 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      myEmitter.emit("myEvent", `${token}`, dataTemp);
+      myEmitter.emit("myEvent", `${token}`, dataTemp, name);
       //myEmitter1.emit('sms', name, orderName, phone);
     } else {
       const dataTemp = JSON.stringify({
@@ -328,7 +328,7 @@ app.post("/api/orders", async (req, res) => {
         transaction_charges: 0,
         total_discount: 0,
       });
-      myEmitter.emit("myEvent", `${token}`, dataTemp);
+      myEmitter.emit("myEvent", `${token}`, dataTemp, name);
     }
     // Listener to receive the response
     myEmitter.on("response", (result) => {
