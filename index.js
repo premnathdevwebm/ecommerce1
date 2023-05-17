@@ -10,105 +10,76 @@ const data = require("./data.json");
 
 const myEmitter = new EventEmitter();
 
-//myEmitter1.on("sms", ()=>{})
-myEmitter.on("email", async (name, order, email, result) => {
-  const html = `<!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Civsa</title>
-      <style>
-        /* Body styles */
-        body {
-          font-family: Arial, sans-serif;
-          font-size: 14px;
-          line-height: 1.5;
-          margin: 0;
-          padding: 0;
-          background-color: #f2f2f2;
-        }
-  
-        /* Header styles */
-        .header {
-          background-color: #003366;
-          color: #ffffff;
-          padding: 20px;
-        }
-  
-        /* Logo styles */
-        .logo {
-          height: 60px;
-          width: 60px;
-        }
-  
-        /* Content styles */
-        .content {
-          background-color: #ffffff;
-          padding: 20px;
-        }
-  
-        /* Footer styles */
-        .footer {
-          background-color: #003366;
-          color: #ffffff;
-          padding: 20px;
-          text-align: center;
-        }
-      </style>
-    </head>
-    <body>
-      <!-- Header -->
-      <div class="header">
-        <img class="logo" src="https://civsa.in/assets/uploads/media-uploader/png-logo-011672403308.png" alt="Company Logo">
-      </div>
-  
-      <!-- Content -->
-      <div class="content">
-        <h1>Oder Placed</h1>
-        <p>Dear Team,</p>
-        <p>${order} order has been placed by ${name}.</p>
-        <p>Best regards,<br>Civsa</p>
-      </div>
-  
-      <!-- Footer -->
-      <div class="footer">
-        <p>&copy; 2023 Civsa. All rights reserved.</p>
-      </div>
-    </body>
-  </html>`;
+function generateMailBody(name, order) {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Civsa</title>
+    <style>
+      /* Body styles */
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        background-color: #f2f2f2;
+      }
 
-  console.log(">>>???", result);
+      /* Header styles */
+      .header {
+        background-color: #003366;
+        color: #ffffff;
+        padding: 20px;
+      }
+
+      /* Logo styles */
+      .logo {
+        height: 60px;
+        width: 60px;
+      }
+
+      /* Content styles */
+      .content {
+        background-color: #ffffff;
+        padding: 20px;
+      }
+
+      /* Footer styles */
+      .footer {
+        background-color: #003366;
+        color: #ffffff;
+        padding: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <img class="logo" src="https://civsa.in/assets/uploads/media-uploader/png-logo-011672403308.png" alt="Company Logo">
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <h1>Oder Placed</h1>
+      <p>Dear Team,</p>
+      <p>${order} order has been placed by ${name}.</p>
+      <p>Best regards,<br>Civsa</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>&copy; 2023 Civsa. All rights reserved.</p>
+    </div>
+  </body>
+</html>`;
+}
 
 /* 
-  await sendEmail(
-    pdfFileLinks,
-    "support@civsa.in",
-    process.env.SENDGRID_SENDER_MAIL,
-    "Order placed",
-    process.env.SENDGRID_SENDER_MAIL,
-    html
-  );
-   */
-
-  /* 
-  const msg = {
-    to: "support@civsa.in", // Change to your recipient
-    from: process.env.SENDGRID_SENDER_MAIL, // Change to your verified sender
-    subject: "Order placed",
-    text: "A order is placed",
-    html,
-  };
-
-  sgMail
-    .send(msg)
-    .then(() => {
-      console.log("Email sent");
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-     */
-});
+//myEmitter1.on("sms", ()=>{})
+*/
 
 myEmitter.on("myEvent", async (arg, arg1) => {
   try {
@@ -361,7 +332,16 @@ app.post("/api/orders", async (req, res) => {
     }
     // Listener to receive the response
     myEmitter.on("response", (result) => {
-      myEmitter.emit("email", name, orderName, email, result);
+     /**
+      * await sendEmail(
+    pdfFileLinks,
+    "support@civsa.in",
+    process.env.SENDGRID_SENDER_MAIL,
+    "Order placed",
+    process.env.SENDGRID_SENDER_MAIL,
+    html
+  );
+      */
       res.status(200).json({ response: result });
     });
 
@@ -391,7 +371,6 @@ app.post("/create-charge", async (req, res) => {
     res.status(500).json({ error: { message: error.message } });
   }
 });
-
 
 // Start the server
 app.listen(1337, "0.0.0.0", () => {
